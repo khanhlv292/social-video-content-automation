@@ -14,6 +14,11 @@ on:
         required: true
         type: boolean
         default: false
+      approve:
+        description: "Approve the generated video for publishing"
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -22,8 +27,9 @@ jobs:
   generate:
     runs-on: ubuntu-latest
     env:
-      PUBLISH_MODE: ${{ inputs.publish == true && 'webhook' || 'dry-run' }}
-      PUBLISH_WEBHOOK_URL: ${{ secrets.PUBLISH_WEBHOOK_URL }}
+      PUBLISH_MODE: dry-run
+      YOUTUBE_ACCESS_TOKEN: ${{ secrets.YOUTUBE_ACCESS_TOKEN }}
+      YOUTUBE_PRIVACY_STATUS: private
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -33,7 +39,7 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
       - name: Generate content package
         run: |
-          PYTHONPATH=src python -m app --topic "${{ inputs.topic }}" --output artifacts --render
+          PYTHONPATH=src python -m app --topic "${{ inputs.topic }}" --output artifacts --render ${{ inputs.approve == true && '--approve' || '' }} ${{ inputs.publish == true && '--publish' || '' }}
       - uses: actions/upload-artifact@v4
         with:
           name: social-content-${{ github.run_id }}

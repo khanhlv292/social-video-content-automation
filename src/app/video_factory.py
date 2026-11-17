@@ -4,6 +4,7 @@ import json
 import os
 import shutil
 import subprocess
+import urllib.request
 import wave
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -55,6 +56,30 @@ class SilentTTSProvider:
             audio.setsampwidth(2)
             audio.setframerate(16_000)
             audio.writeframes(b"\0\0" * 16_000 * duration)
+        return destination
+
+
+class WebhookTTSProvider:
+    def __init__(self, url: str) -> None:
+        self.url = url
+
+    def synthesize(self, text: str, destination: Path) -> Path:
+        payload = json.dumps({"text": text, "format": "wav", "sample_rate": 16_000}).encode("utf-8")
+        request = urllib.request.Request(
+            self.url,
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=60) as response:
+                audio = response.read()
+        except (OSError, ValueError) as exc:
+            raise RuntimeError(f"TTS webhook failed: {exc}") from exc
+        if not audio:
+            raise RuntimeError("TTS webhook returned an empty audio file")
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(audio)
         return destination
 
 
@@ -177,7 +202,18 @@ def write_video_artifacts(package: dict, destination: Path) -> dict:
     plan = build_video_plan(package)
     destination.mkdir(parents=True, exist_ok=True)
     (destination / "video-plan.json").write_text(json.dumps(asdict(plan), ensure_ascii=False, indent=2) + "\n")
-    audio = SilentTTSProvider().synthesize(plan.title + " " + " ".join(scene.text for scene in plan.scenes), destination / "voice.wav")
+    text = plan.title + " " + " ".join(scene.text for scene in plan.scenes)
+    tts_mode = os.getenv("TTS_MODE", "silent").lower()
+    if tts_mode == "webhook":
+        tts_url = os.getenv("TTS_WEBHOOK_URL")
+        if not tts_url:
+            raise RuntimeError("TTS_WEBHOOK_URL is required when TTS_MODE=webhook")
+        provider: TTSProvider = WebhookTTSProvider(tts_url)
+    elif tts_mode == "silent":
+        provider = SilentTTSProvider()
+    else:
+        raise ValueError("TTS_MODE must be silent or webhook")
+    audio = provider.synthesize(text, destination / "voice.wav")
     video = render_video(plan, audio, destination / "video.mp4")
     qa = quality_check(video, plan)
     (destination / "qa.json").write_text(json.dumps(qa, ensure_ascii=False, indent=2) + "\n")

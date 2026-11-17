@@ -1,6 +1,6 @@
 # Social Video Content Automation
 
-MVP pipeline tạo **content package** cho video ngắn, kiểm tra các điều kiện an toàn cơ bản, lưu artifact và tùy chọn gửi tới publisher webhook. Hệ thống mặc định chạy `dry-run`; không scraping, không spam và không tự vượt qua chính sách/điều kiện kiếm tiền của nền tảng.
+MVP pipeline tạo **content package** và MP4 cho video ngắn, kiểm tra các điều kiện an toàn cơ bản, lưu artifact và tùy chọn publish qua API chính thức. Hệ thống mặc định chạy `dry-run`; không scraping, không spam và không tự vượt qua chính sách/điều kiện kiếm tiền của nền tảng.
 
 ## Luồng
 
@@ -10,7 +10,8 @@ MVP pipeline tạo **content package** cho video ngắn, kiểm tra các điều
 4. Tạo asset manifest, voice artifact và subtitle timing.
 5. Render video 9:16 bằng FFmpeg, tạo `video.mp4`.
 6. Chạy `ffprobe` QA và ghi `qa.json`.
-7. Nếu `PUBLISH_MODE=webhook`, gửi JSON tới một adapter dùng API chính thức của nền tảng.
+7. Ghi `approval.json`; chỉ video có trạng thái `approved` mới được publish.
+8. Với `--publish`, upload resumable tới YouTube Data API bằng OAuth access token.
 
 > Hệ thống chỉ tạo nội dung và gọi adapter được cấu hình. Việc tài khoản có đủ điều kiện kiếm tiền, được duyệt quảng cáo hay nhận thanh toán do từng nền tảng quyết định.
 
@@ -23,16 +24,15 @@ PYTHONPATH=src python -m app --topic "mẹo học tiếng Anh" --output artifact
 Chế độ mặc định là `dry-run`. Để gọi publisher:
 
 ```bash
-export PUBLISH_MODE=webhook
-export PUBLISH_WEBHOOK_URL="https://your-approved-adapter.example/publish"
-python -m app --topic "mẹo học tiếng Anh" --output artifacts
+export YOUTUBE_ACCESS_TOKEN="..."
+PYTHONPATH=src python -m app --topic "mẹo học tiếng Anh" --output artifacts --render --approve --publish
 ```
 
 Không commit token/API key. Xem `.env.example`.
 
 ## GitHub Actions
 
-Workflow `.github/workflows/generate-content.yml` chạy mỗi ngày và có thể chạy thủ công. Nó chỉ bật đăng thật khi chọn `publish=true` và secret `PUBLISH_WEBHOOK_URL` đã được cấu hình. Nên dùng webhook/adapter riêng gọi API chính thức của YouTube, TikTok, Instagram hoặc Facebook; không dùng thông tin đăng nhập trình duyệt.
+Workflow `.github/workflows/generate-content.yml` chạy mỗi ngày và có thể chạy thủ công. Nó chỉ bật đăng thật khi chọn đồng thời `approve=true`, `publish=true` và secret `YOUTUBE_ACCESS_TOKEN` đã được cấu hình. Không dùng thông tin đăng nhập trình duyệt.
 
 ## Mở rộng tiếp theo
 
