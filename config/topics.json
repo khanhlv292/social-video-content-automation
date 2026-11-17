@@ -1,0 +1,20 @@
+[
+  {
+    "slug": "productivity",
+    "name": "Năng suất cá nhân",
+    "audience": "người đi làm bận rộn",
+    "angle": "một mẹo nhỏ có thể áp dụng ngay hôm nay"
+  },
+  {
+    "slug": "language-learning",
+    "name": "Học ngoại ngữ",
+    "audience": "người mới học tiếng Anh",
+    "angle": "một ví dụ ngắn, dễ nhớ và không phóng đại kết quả"
+  },
+  {
+    "slug": "personal-finance",
+    "name": "Tài chính cá nhân",
+    "audience": "người trưởng thành mới quản lý chi tiêu",
+    "angle": "một thói quen ngân sách mang tính giáo dục, không phải tư vấn đầu tư"
+  }
+]
