@@ -151,6 +151,8 @@ def run(
             json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
         )
     elif publish:
+        if os.getenv("ENABLE_PUBLISHING", "false").lower() != "true":
+            raise RuntimeError("Publishing is paused; set ENABLE_PUBLISHING=true only when explicitly re-enabled")
         if approval.status != "approved":
             raise RuntimeError("Publishing requires an approved rendered video")
         result = publish_youtube(destination / "video.mp4", asdict(package))
