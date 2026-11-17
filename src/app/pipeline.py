@@ -11,6 +11,7 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
+from .metrics import write_pending_metrics
 from .publishing import Approval, load_approval, publish_youtube, save_approval
 from .video_factory import write_video_artifacts
 
@@ -128,6 +129,7 @@ def run(
     package_path.write_text(json.dumps(asdict(package), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     if render:
         write_video_artifacts(asdict(package), destination)
+        write_pending_metrics(destination)
         approval_path = destination / "approval.json"
         approval = Approval(
             status="approved" if approve else "pending",

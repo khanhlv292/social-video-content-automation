@@ -11,7 +11,7 @@ MVP pipeline tạo **content package** và MP4 cho video ngắn, kiểm tra các
 5. Render video 9:16 bằng FFmpeg, tạo `video.mp4`.
 6. Chạy `ffprobe` QA và ghi `qa.json`.
 7. Ghi `approval.json`; chỉ video có trạng thái `approved` mới được publish.
-8. Với `--publish`, upload resumable tới YouTube Data API bằng OAuth access token.
+8. Với `--publish`, upload resumable tới YouTube Data API bằng OAuth access token và tạo `metrics.json` chờ thu thập số liệu.
 
 > Hệ thống chỉ tạo nội dung và gọi adapter được cấu hình. Việc tài khoản có đủ điều kiện kiếm tiền, được duyệt quảng cáo hay nhận thanh toán do từng nền tảng quyết định.
 
@@ -40,3 +40,7 @@ Workflow `.github/workflows/generate-content.yml` chạy mỗi ngày và có th�
 - Thêm renderer MP4 (FFmpeg/TTS) và kiểm tra bản quyền media.
 - Viết adapter riêng cho từng nền tảng, giới hạn tốc độ và idempotency.
 - Thêm bước duyệt người dùng trước khi publish và thu thập số liệu doanh thu hợp lệ.
+
+Artifact sau mỗi lần render:
+
+`content.json → video-plan.json → voice.wav → captions.srt → video.mp4 → qa.json → approval.json → metrics.json`
