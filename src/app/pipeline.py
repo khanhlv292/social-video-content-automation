@@ -11,6 +11,8 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
+from .video_factory import write_video_artifacts
+
 
 BLOCKED_TERMS = {
     "guaranteed income",
@@ -106,7 +108,7 @@ def publish_webhook(package: ContentPackage, url: str) -> dict[str, Any]:
         raise RuntimeError(f"Publisher webhook thất bại: {exc}") from exc
 
 
-def run(topic_name: str | None, output_dir: Path) -> Path:
+def run(topic_name: str | None, output_dir: Path, render: bool = False) -> Path:
     topics = load_topics(Path(os.getenv("TOPICS_FILE", "config/topics.json")))
     topic = next((item for item in topics if item.name == topic_name or item.slug == topic_name), topics[0])
     package_id = f"{date.today().isoformat()}-{re.sub(r'[^a-z0-9-]', '-', topic.slug)}"
@@ -117,6 +119,8 @@ def run(topic_name: str | None, output_dir: Path) -> Path:
     destination.mkdir(parents=True, exist_ok=True)
     package_path = destination / "content.json"
     package_path.write_text(json.dumps(asdict(package), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    if render:
+        write_video_artifacts(asdict(package), destination)
 
     mode = os.getenv("PUBLISH_MODE", "dry-run").lower()
     if mode == "webhook":
@@ -136,9 +140,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Generate a safe social video content package")
     parser.add_argument("--topic", help="Topic slug or exact topic name")
     parser.add_argument("--output", default="artifacts", help="Artifact directory")
+    parser.add_argument("--render", action="store_true", help="Render a 9:16 MP4 and run video QA")
     args = parser.parse_args()
     try:
-        path = run(args.topic, Path(args.output))
+        path = run(args.topic, Path(args.output), render=args.render)
     except (RuntimeError, ValueError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         raise SystemExit(1) from exc

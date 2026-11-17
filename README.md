@@ -5,17 +5,19 @@ MVP pipeline tạo **content package** cho video ngắn, kiểm tra các điều
 ## Luồng
 
 1. Chọn chủ đề từ `config/topics.json`.
-2. Tạo tiêu đề, kịch bản, caption, hashtag và disclosure.
+2. Tạo tiêu đề, kịch bản, scene plan, caption, hashtag và disclosure.
 3. Kiểm tra độ dài, từ khóa bị cấm và trường bắt buộc.
-4. Ghi gói nội dung vào `artifacts/YYYY-MM-DD/content.json`.
-5. Nếu `PUBLISH_MODE=webhook`, gửi JSON tới một adapter dùng API chính thức của nền tảng.
+4. Tạo asset manifest, voice artifact và subtitle timing.
+5. Render video 9:16 bằng FFmpeg, tạo `video.mp4`.
+6. Chạy `ffprobe` QA và ghi `qa.json`.
+7. Nếu `PUBLISH_MODE=webhook`, gửi JSON tới một adapter dùng API chính thức của nền tảng.
 
 > Hệ thống chỉ tạo nội dung và gọi adapter được cấu hình. Việc tài khoản có đủ điều kiện kiếm tiền, được duyệt quảng cáo hay nhận thanh toán do từng nền tảng quyết định.
 
 ## Chạy local
 
 ```bash
-PYTHONPATH=src python -m app --topic "mẹo học tiếng Anh" --output artifacts
+PYTHONPATH=src python -m app --topic "mẹo học tiếng Anh" --output artifacts --render
 ```
 
 Chế độ mặc định là `dry-run`. Để gọi publisher:

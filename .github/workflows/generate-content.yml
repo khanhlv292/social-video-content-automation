@@ -29,9 +29,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Install FFmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
       - name: Generate content package
         run: |
-          PYTHONPATH=src python -m app --topic "${{ inputs.topic }}" --output artifacts
+          PYTHONPATH=src python -m app --topic "${{ inputs.topic }}" --output artifacts --render
       - uses: actions/upload-artifact@v4
         with:
           name: social-content-${{ github.run_id }}
